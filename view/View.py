@@ -2,7 +2,6 @@ import pygame
 from model import *
 from colors import *
 
-
 FPS = 60
 
 
@@ -20,5 +19,9 @@ class View:
 
     def show_square(self, square):
         """Show on square"""
-        pygame.draw.rect(self.win, square.color, square.get_rect)
+        rect = self.get_rect_from_square(square)
+        pygame.draw.rect(self.win, square.color, rect)
         pygame.display.update()
+
+    def get_rect_from_square(self, square):
+        return pygame.Rect(square.position[0], square.position[1], square.size, square.size)
