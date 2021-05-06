@@ -5,13 +5,14 @@ from threading import Timer
 
 
 class Controller:
+
     def __init__(self, view):
         self.keepGoing = True
         self.view = view
-        self.squares = [model.Square(100, (350, 150), GREEN),
-                        model.Square(100, (500, 150), RED),
-                        model.Square(100, (350, 260), YELLOW),
-                        model.Square(100, (500, 260), BLUE)]
+        self.squares = [model.Square(100, (350, 150), GREEN, "./sounds/beep1.ogg"),
+                        model.Square(100, (500, 150), RED, "./sounds/beep2.ogg"),
+                        model.Square(100, (350, 260), YELLOW, "./sounds/beep3.ogg"),
+                        model.Square(100, (500, 260), BLUE, "./sounds/beep4.ogg")]
 
     def run(self):
         clock = pygame.time.Clock()
@@ -41,12 +42,9 @@ class Controller:
             for square in self.squares:
                 rect = self.view.get_rect_from_square(square)
                 if rect.collidepoint(pos):
-                    original_color = square.color
-                    new_color = (
-                        original_color[0] + (255 - original_color[0]) * 1 / 4,
-                        original_color[1] + (255 - original_color[1]) * 1 / 2,
-                        original_color[2] + (255 - original_color[2]) * 3 / 4,)
-                    square.update_color(new_color)
-                    timer = Timer(0.5, lambda: square.update_color(original_color))
+                    square.update_color(square.secondary_color)
+                    pygame.mixer.music.load(square.sound_path)
+                    pygame.mixer.music.play(0)
+                    timer = Timer(0.3, lambda: square.update_color(square.main_color))
                     timer.start()
                     return
