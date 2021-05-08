@@ -1,6 +1,7 @@
 class Square:
-    def __init__(self, size, position, color,sound_path):
-        self.size = size
+    def __init__(self, height, position, color, width=None):
+        self.height = height
+        self.width = width
         self.position = position
         self.color = color
         self.main_color = color
@@ -8,7 +9,19 @@ class Square:
             color[0] + (255 - color[0]) * 1 / 4,
             color[1] + (255 - color[1]) * 1 / 2,
             color[2] + (255 - color[2]) * 3 / 4,)
-        self.sound_path = sound_path
+
+        if width is None:
+            self.width = height
 
     def update_color(self, color):
         self.color = color
+
+
+class Button(Square):
+    def __init__(self, height, position, color, sound_path="", text=None, on_click=None, width=None):
+        super().__init__(height, position, color, width)
+        self.sound_path = sound_path
+        self.text = text
+        self.on_click = on_click
+        self.text_positionX = self.width - 50
+        self.text_positionY = self.height - 25
