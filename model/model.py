@@ -23,5 +23,5 @@ class Button(Square):
         self.sound_path = sound_path
         self.text = text
         self.on_click = on_click
-        self.text_positionX = self.width - 50
-        self.text_positionY = self.height - 25
+        self.text_positionX = self.position[0] + 45
+        self.text_positionY = self.position[1] + 10
