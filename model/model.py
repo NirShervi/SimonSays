@@ -1,3 +1,6 @@
+import random
+
+
 class Square:
     def __init__(self, height, position, color, width=None):
         self.height = height
@@ -25,3 +28,21 @@ class Button(Square):
         self.on_click = on_click
         self.text_positionX = self.position[0] + 45
         self.text_positionY = self.position[1] + 10
+
+
+class Simon:
+    def __init__(self):
+        self.challenge = []
+        self.lvl = 3
+
+    def init_challenge(self):
+        self.challenge = []
+        for x in range(self.lvl):
+            self.challenge.append(random.randint(0, 3))
+
+
+class Text:
+    def __init__(self, txt, x, y):
+        self.msg = txt
+        self.x = x
+        self.y = y
