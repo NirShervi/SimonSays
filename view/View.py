@@ -9,12 +9,12 @@ class View:
     def __init__(self):
         pygame.init()
         self.win = pygame.display.set_mode((900, 500))
-        self.win.fill(WHITE)
+        self.win.fill(BLACK)
         self.small_font = pygame.font.SysFont('Corbel', 35)
         pygame.display.set_caption("Simon Says")
 
     def update_view(self):
-        self.win.fill(WHITE)
+        self.win.fill(BLACK)
 
     def show_window(self, objects):
         """Objets to show on the screen"""
@@ -36,7 +36,7 @@ class View:
 
     def show_text(self, txt):
         """Shows text on the screen"""
-        text = self.small_font.render(txt.msg, True, BLACK)
+        text = self.small_font.render(txt.msg, True, WHITE)
         self.win.blit(text, (txt.x, txt.y))
         pygame.display.update()
 

@@ -33,12 +33,22 @@ class Button(Square):
 class Simon:
     def __init__(self):
         self.challenge = []
+        self.steps_to_show = []
         self.lvl = 3
 
     def init_challenge(self):
         self.challenge = []
+        self.steps_to_show = []
         for x in range(self.lvl):
-            self.challenge.append(random.randint(0, 3))
+            num = random.randint(0, 3)
+            self.challenge.append(num)
+            self.steps_to_show.append(num)
+
+
+class Player:
+    def __init__(self):
+        self.score = 0
+        self.steps_done = []
 
 
 class Text:
