@@ -5,7 +5,7 @@ from colors import *
 from threading import Timer
 
 SHOW_SIMON_TURN = pygame.USEREVENT + 1
-SIMON_TURN_EVENT = pygame.event.Event(SHOW_SIMON_TURN)
+SIMON_TURN_EVENT = pygame.event.Event(SHOW_SIMON_TURN, show_turn="False")
 YOUR_TURN = pygame.USEREVENT + 2
 YOUR_TURN_EVENT = pygame.event.Event(YOUR_TURN)
 
@@ -27,11 +27,11 @@ class Controller:
                                          on_click=self.handle_start_event())
         self.score_txt = model.Text("Score : 0", 10, 10)
         self.simon_turn = False
-        self.simon_turn_txt = model.Text("Simon's Turn", 400, 50)
-        self.your_turn_txt = model.Text("Your Turn", 400, 50)
+        self.main_text = model.Text("Simon's Turn", 400, 50)
         self.to_display = [*self.squares, self.start_button, self.score_txt]
         self.clickable = [*self.squares, self.start_button]
         self.blinks = 0
+        self.sleep_time = 1
         self.sleep = False
 
     def run(self):
@@ -43,9 +43,14 @@ class Controller:
                 if event.type == pygame.QUIT:
                     self.keepGoing = False
                 elif event.type == SHOW_SIMON_TURN:
-                    self.sleep = True
-                    self.show_steps()
+                    if event.show_turn == "True":
+
+                        self.show_simon_turn()
+                    else:
+                        self.sleep = True
+                        self.show_steps()
                 elif event.type == YOUR_TURN:
+                    self.sleep = False
                     self.show_player_turn()
 
             event_pos = self.get_event(events)
@@ -54,7 +59,8 @@ class Controller:
             self.check_turn()
             self.init_window()
             if self.sleep:
-                time.sleep(1)
+                time.sleep(self.sleep_time)
+                self.sleep_time = 1
                 self.sleep = False
 
     def init_window(self):
@@ -84,18 +90,12 @@ class Controller:
         return self.show_simon_turn
 
     def handle_player_move(self, index):
-        if len(self.player.steps_done) == 0:
-            if self.simon.challenge[0] == index:
-                self.blink(index, False)
-                self.player.steps_done.append(index)
-            else:
-                pass
+        if self.simon.challenge[len(self.player.steps_done)] == index:
+            self.blink(index, False)
+            self.player.steps_done.append(index)
         else:
-            if self.simon.challenge[len(self.player.steps_done)] == index:
-                self.blink(index, False)
-                self.player.steps_done.append(index)
-            else:
-                pass
+            self.update_main_txt("Oh no! Wrong answer :( ")
+            self.simon_turn = True
 
     def show_simon_turn(self):
         self.view.update_view()
@@ -103,22 +103,27 @@ class Controller:
         if self.start_button in self.to_display:
             self.to_display.remove(self.start_button)
             self.clickable.remove(self.start_button)
-        if self.your_turn_txt in self.to_display:
-            self.to_display.remove(self.your_turn_txt)
-        self.to_display.append(self.simon_turn_txt)
+
+        self.update_main_txt("Simon's Turn")
         pygame.event.post(SIMON_TURN_EVENT)
 
     def show_player_turn(self):
         self.view.update_view()
-        self.to_display.remove(self.simon_turn_txt)
-        self.to_display.append(self.your_turn_txt)
+        self.update_main_txt("Your Turn")
 
     def show_steps(self):
         if len(self.simon.steps_to_show) > 0:
-            index = self.simon.steps_to_show.pop()
+            index = self.simon.steps_to_show.pop(0)
             self.blink(index, True)
         if len(self.simon.steps_to_show) > 0:
             pygame.event.post(SIMON_TURN_EVENT)
+
+    def update_main_txt(self, new_txt):
+        self.view.update_view()
+        self.main_text.msg = new_txt
+        if self.main_text not in self.to_display:
+            self.to_display.append(self.main_text)
+        self.sleep = True
 
     def blink(self, index, update_blinks):
         square = self.squares[index]
@@ -141,5 +146,10 @@ class Controller:
             pygame.event.post(YOUR_TURN_EVENT)
         elif len(self.player.steps_done) == self.simon.lvl:
             self.player.steps_done = []
-            timer = Timer(1, self.show_simon_turn)
+            self.update_main_txt("Good Job!")
+            self.simon.lvl += 1
+            self.player.score += 10
+            self.score_txt.msg = f"Score: {self.player.score}"
+            event = pygame.event.Event(SHOW_SIMON_TURN, show_turn="True")
+            timer = Timer(1, lambda: pygame.event.post(event))
             timer.start()

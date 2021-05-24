@@ -34,7 +34,7 @@ class Simon:
     def __init__(self):
         self.challenge = []
         self.steps_to_show = []
-        self.lvl = 3
+        self.lvl = 1
 
     def init_challenge(self):
         self.challenge = []
