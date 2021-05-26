@@ -25,6 +25,8 @@ class Controller:
             model.Button(100, (500, 260), BLUE, "./sounds/beep4.ogg", on_click=self.handle_square_event(3))]
         self.start_button = model.Button(50, (400, 50), ORANGE, text="Start", width=150,
                                          on_click=self.handle_start_event())
+        self.restart_button = model.Button(50, (10, 80), ORANGE, on_click=self.restart, text="Try again",
+                                           width=200)
         self.score_txt = model.Text("Score : 0", 10, 10)
         self.simon_turn = False
         self.main_text = model.Text("Simon's Turn", 400, 50)
@@ -33,6 +35,10 @@ class Controller:
         self.blinks = 0
         self.sleep_time = 1
         self.sleep = False
+
+    def restart(self):
+        self.view.update_view()
+        self.__init__(self.view)
 
     def run(self):
         clock = pygame.time.Clock()
@@ -44,7 +50,6 @@ class Controller:
                     self.keepGoing = False
                 elif event.type == SHOW_SIMON_TURN:
                     if event.show_turn == "True":
-
                         self.show_simon_turn()
                     else:
                         self.sleep = True
@@ -80,6 +85,8 @@ class Controller:
                 if rect.collidepoint(pos):
                     if not self.simon_turn:
                         square.on_click()
+                    elif square == self.restart_button:
+                        square.on_click()
                     return
 
     def handle_square_event(self, i):
@@ -96,6 +103,8 @@ class Controller:
         else:
             self.update_main_txt("Oh no! Wrong answer :( ")
             self.simon_turn = True
+            self.to_display.append(self.restart_button)
+            self.clickable.append(self.restart_button)
 
     def show_simon_turn(self):
         self.view.update_view()
