@@ -46,9 +46,14 @@ class Simon:
 
 
 class Player:
-    def __init__(self):
+    def __init__(self, player_name, all_scores):
         self.score = 0
         self.steps_done = []
+        self.total_score = 0
+        self.name = player_name
+        for name, score in all_scores:
+            if name == self.name:
+                self.total_score = score
 
 
 class Text:
@@ -57,3 +62,4 @@ class Text:
         self.x = x
         self.y = y
         self.small = small
+

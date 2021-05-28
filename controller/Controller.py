@@ -1,17 +1,19 @@
-import pygame
 import time
 from model import model
 from colors import *
 from threading import Timer
+from db import *
 
 
 class Controller:
-    def __init__(self, view):
-        self.player_name = model.Text("", 405, 125)
-        self.game_controller = GameController(view, self.player_name)
-        self.main_controller = MainMenuController(view, self.player_name)
+    def __init__(self, view, rows, conn):
+        self.current_player = model.Text("", 405, 125)
+        self.players_and_scores = rows
+        self.game_controller = GameController(view, self.current_player, self.players_and_scores, conn)
+        self.main_controller = MainMenuController(view, self.current_player, self.players_and_scores, conn)
         self.mode = MAIN_MOD
         self.view = view
+        self.db_conn = conn
 
     def run(self):
         clock = pygame.time.Clock()
@@ -24,20 +26,27 @@ class Controller:
             else:
                 mode_tmp = self.main_controller.run(events)
             if mode_tmp != self.mode:
+                if mode_tmp == MAIN_MOD:
+                    self.players_and_scores = self.game_controller.players_and_scores
                 self.mode = mode_tmp
-                self.game_controller = GameController(self.view, self.player_name)
-                self.main_controller = MainMenuController(self.view, self.player_name)
+                self.game_controller = GameController(self.view, self.current_player, self.players_and_scores,
+                                                      self.db_conn)
+                self.main_controller = MainMenuController(self.view, self.current_player, self.players_and_scores,
+                                                          self.db_conn)
+
                 self.view.update_view()
 
 
 class AbstractController:
-    def __init__(self, view, player_name):
+    def __init__(self, view, player_name, players_and_scores, conn):
         self.view = view
-        self.player_name = player_name
+        self.players_and_scores = players_and_scores
+        self.current_player = player_name
         self.to_display = []
         self.main_text = None
         self.sleep = False
         self.keepGoing = True
+        self.db_conn = conn
 
     def init_window(self):
         self.view.show_window(self.to_display)
@@ -52,10 +61,10 @@ class AbstractController:
 
 class GameController(AbstractController):
 
-    def __init__(self, view, player_name):
-        super().__init__(view, player_name)
+    def __init__(self, view, player_name, players_and_scores, conn):
+        super().__init__(view, player_name, players_and_scores, conn)
         self.simon = model.Simon()
-        self.player = model.Player()
+        self.player = model.Player(player_name.msg, players_and_scores)
         self.keepGoing = PLAY_MOD
         self.squares = [
             model.Button(100, (350, 150), GREEN, "./sounds/beep1.ogg", on_click=self.handle_square_event(0)),
@@ -79,7 +88,7 @@ class GameController(AbstractController):
 
     def restart(self):
         self.view.update_view()
-        self.__init__(self.view, self.player_name)
+        self.__init__(self.view, self.current_player, self.players_and_scores, self.db_conn)
 
     def run(self, events):
         for event in events:
@@ -141,6 +150,8 @@ class GameController(AbstractController):
             self.clickable.append(self.restart_button)
             self.to_display.append(self.back_button)
             self.clickable.append(self.back_button)
+            insert_row(self.db_conn, (self.player.name, self.player.total_score))
+            self.players_and_scores = get_all_rows(self.db_conn)
 
     def show_simon_turn(self):
         self.view.update_view()
@@ -187,6 +198,7 @@ class GameController(AbstractController):
             super().update_main_txt("Good Job!")
             self.simon.lvl += 1
             self.player.score += 10
+            self.player.total_score += 10
             self.score_txt.msg = f"Score: {self.player.score}"
             event = pygame.event.Event(SHOW_SIMON_TURN, show_turn="True")
             timer = Timer(1, lambda: pygame.event.post(event))
@@ -194,17 +206,19 @@ class GameController(AbstractController):
 
 
 class MainMenuController(AbstractController):
-    def __init__(self, view, player_name):
-        super().__init__(view, player_name)
+    def __init__(self, view, player_name, players_and_scores, conn):
+        super().__init__(view, player_name, players_and_scores, conn)
         self.main_text = model.Text("Welcome to Simon!", 350, 50)
         self.enter_your_name = model.Text("Please enter your name bellow:", 400, 90, small=True)
         self.play_button = model.Button(50, (400, 200), ORANGE, on_click=self.change_mod,
                                         text="Play", width=150)
         self.input_box = model.Button(50, (400, 120), PASSIVE_INPUT, width=150, on_click=self.handle_input_active)
+        self.top_players = model.Text("Top 5 players:", 400, 250)
         self.input_active = False
-        self.to_display = [self.main_text, self.play_button, self.input_box, self.enter_your_name]
+        self.to_display = [self.main_text, self.play_button, self.input_box, self.enter_your_name, self.top_players]
         self.clickable = [self.play_button, self.input_box]
         self.keepGoing = MAIN_MOD
+        self.draw_top_players()
 
     def run(self, events):
         for event in events:
@@ -212,12 +226,12 @@ class MainMenuController(AbstractController):
                 self.keepGoing = EXIT
             if event.type == pygame.KEYDOWN and self.input_active:
                 if event.key == pygame.K_BACKSPACE:
-                    self.player_name.msg = self.player_name.msg[:-1]
-                    self.input_box.text = self.player_name.msg
+                    self.current_player.msg = self.current_player.msg[:-1]
+                    self.input_box.text = self.current_player.msg
                     self.view.update_view()
                 else:
-                    self.player_name.msg += event.unicode
-                    self.input_box.text = self.player_name.msg
+                    self.current_player.msg += event.unicode
+                    self.input_box.text = self.current_player.msg
                     self.view.update_view()
 
         event_pos = get_event(events)
@@ -244,6 +258,13 @@ class MainMenuController(AbstractController):
 
     def handle_input_active(self):
         self.input_active = True
+
+    def draw_top_players(self):
+        index = 1
+        for name, score in self.players_and_scores:
+            tmp_txt = model.Text(f"{index}) {name} : {score}", 400, 300 + (index - 1) * 40)
+            self.to_display.append(tmp_txt)
+            index += 1
 
 
 def get_event(ev):
