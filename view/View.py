@@ -6,6 +6,11 @@ FPS = 60
 
 
 class View:
+    """ View class is responsible to show the object on the screen
+    :param
+    :return:
+    """
+
     def __init__(self):
         pygame.init()
         self.win = pygame.display.set_mode((900, 500))
@@ -15,10 +20,18 @@ class View:
         pygame.display.set_caption("Simon Says")
 
     def update_view(self):
+        """ Reset the screen, paint it all the to base color
+        :param
+        :return:
+        """
         self.win.fill(BLACK)
 
     def show_window(self, objects):
-        """Objets to show on the screen"""
+        """ create a database connection to the SQLite database
+            specified by the db_file
+        :param objects : an array of object that we can show on the screen. Can be only Text or Square isntace.
+        :return:
+        """
         for object_to_show in objects:
             if isinstance(object_to_show, model.Square):
                 self.show_square(object_to_show)
@@ -26,7 +39,10 @@ class View:
                 self.show_text(object_to_show)
 
     def show_square(self, square):
-        """Show on square"""
+        """ shows Square object on the screen
+        :param square: can be Square only
+        :return:
+        """
 
         if isinstance(square, model.Button):
             rect = self.get_rect_from_square(square)
@@ -43,13 +59,20 @@ class View:
         pygame.display.update()
 
     def show_text(self, txt):
-        """Shows text on the screen"""
+        """ Shows Text object on the screen
+        :param txt: An Text typed object.
+        :return:
+        """
         if txt.small is True:
             text = self.base_font.render(txt.msg, True, WHITE)
         else:
-            text = self.small_font.render(txt.msg, True, WHITE,)
+            text = self.small_font.render(txt.msg, True, WHITE, )
         self.win.blit(text, (txt.x, txt.y))
         pygame.display.update()
 
     def get_rect_from_square(self, square):
+        """ This function getting Square object and returns Pygame.Rect
+        :param square: Square object
+        :return: pygame.Rect
+        """
         return pygame.Rect(square.position[0], square.position[1], square.width, square.height)

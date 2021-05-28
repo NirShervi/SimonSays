@@ -6,6 +6,13 @@ from db import *
 
 
 class Controller:
+    """ This class represent the main controller, the main controller is responsible to switch between different controllers
+      :param view: the main view class,
+      rows: a list of tuple that represent the score table,
+      conn: a a connection to the database
+      :return:
+      """
+
     def __init__(self, view, rows, conn):
         self.current_player = model.Text("", 405, 125)
         self.players_and_scores = rows
@@ -16,6 +23,11 @@ class Controller:
         self.db_conn = conn
 
     def run(self):
+        """ This function responsible to get the events and pass them to the controllers.
+        Each iteration of the while loop in this function is a frame.
+          :param
+          :return:
+          """
         clock = pygame.time.Clock()
         while self.mode is not EXIT:
             clock.tick(60)
@@ -38,6 +50,13 @@ class Controller:
 
 
 class AbstractController:
+    """ This class is an abstract class. Do not use it by itself! The MainController and GameController inherit this
+    class. The controller is responsible to decide what to show on the screen and on which object we can click
+
+      :param
+      :return:
+      """
+
     def __init__(self, view, player_name, players_and_scores, conn):
         self.view = view
         self.players_and_scores = players_and_scores
@@ -49,9 +68,17 @@ class AbstractController:
         self.db_conn = conn
 
     def init_window(self):
+        """ Init window is responsible to show the object that are inside to_display list
+          :param
+          :return:
+          """
         self.view.show_window(self.to_display)
 
     def update_main_txt(self, new_txt):
+        """ update_main_txt updating the main_text object
+          :param new_txt: the new text we want to show on the screen
+          :return:
+          """
         self.view.update_view()
         self.main_text.msg = new_txt
         if self.main_text not in self.to_display:
@@ -60,6 +87,11 @@ class AbstractController:
 
 
 class GameController(AbstractController):
+    """ The game controller is the controller that handle all the events in the play screen, and decides what to show on
+    the screen.
+      :param
+      :return:
+      """
 
     def __init__(self, view, player_name, players_and_scores, conn):
         super().__init__(view, player_name, players_and_scores, conn)
@@ -87,10 +119,18 @@ class GameController(AbstractController):
         self.sleep = False
 
     def restart(self):
+        """ Reset the GameController object to the initial value
+          :param
+          :return:
+          """
         self.view.update_view()
         self.__init__(self.view, self.current_player, self.players_and_scores, self.db_conn)
 
     def run(self, events):
+        """ Runs the game, each call of this function is a frame
+          :param events: a list of pygame events
+          :return: the next mod we want to be
+          """
         for event in events:
             if event.type == pygame.QUIT:
                 self.keepGoing = EXIT
@@ -117,6 +157,10 @@ class GameController(AbstractController):
         return self.keepGoing
 
     def handle_events(self, pos):
+        """ handle events handle user events or pygame events
+          :param pos: if user clicked on the screen, pos represent the click position
+          :return:
+          """
         if pos:
             for square in self.clickable:
                 rect = self.view.get_rect_from_square(square)
@@ -130,16 +174,33 @@ class GameController(AbstractController):
                     return
 
     def handle_square_event(self, i):
+        """
+          :param i: index of a button in our squares list
+          :return: a function to be called when a user clicked on a square
+          """
         return lambda: self.handle_player_move(i)
 
     def handle_start_event(self):
+        """ This function block user click event.
+          :param
+          :return a function to be called when a user click on an event:
+          """
         self.simon_turn = True
         return self.show_simon_turn
 
     def handle_back_event(self):
+        """ This function set the next mod to be the main mod. after calling this function we will be in the main menu
+          :param
+          :return:
+          """
         self.keepGoing = MAIN_MOD
 
     def handle_player_move(self, index):
+        """ This function check if user was right when he making a step, also this function responsible to
+        make the squares blink and to let the user know if he was wrong
+          :param index: index represent the index of a square in our squares list
+          :return:
+          """
         if self.simon.challenge[len(self.player.steps_done)] == index:
             self.blink(index, False)
             self.player.steps_done.append(index)
@@ -154,6 +215,10 @@ class GameController(AbstractController):
             self.players_and_scores = get_all_rows(self.db_conn)
 
     def show_simon_turn(self):
+        """ Letting the user know that is now Simon turn's
+          :param
+          :return:
+          """
         self.view.update_view()
         self.simon.init_challenge()
         if self.start_button in self.to_display:
@@ -164,10 +229,18 @@ class GameController(AbstractController):
         pygame.event.post(SIMON_TURN_EVENT)
 
     def show_player_turn(self):
+        """Letting the user know that now is the user turn
+          :param
+          :return:
+          """
         self.view.update_view()
         super().update_main_txt("Your Turn")
 
     def show_steps(self):
+        """ Showing the user the steps he needs to follow
+          :param
+          :return:
+          """
         if len(self.simon.steps_to_show) > 0:
             index = self.simon.steps_to_show.pop(0)
             self.blink(index, True)
@@ -175,6 +248,11 @@ class GameController(AbstractController):
             pygame.event.post(SIMON_TURN_EVENT)
 
     def blink(self, index, update_blinks):
+        """ Making a square blink and also make a sound
+          :param index: represent a index in the squares list.
+          :param update_blinks: if we want to count this as a simon step or user step
+          :return:
+          """
         square = self.squares[index]
         square.update_color(square.secondary_color)
         pygame.mixer.music.load(square.sound_path)
@@ -189,6 +267,10 @@ class GameController(AbstractController):
         timer.start()
 
     def check_turn(self):
+        """ Checks if this is the user turn or simon turn
+          :param
+          :return:
+          """
         if self.blinks == self.simon.lvl:
             self.blinks = 0
             self.simon_turn = False
@@ -206,6 +288,12 @@ class GameController(AbstractController):
 
 
 class MainMenuController(AbstractController):
+    """ This is the controller that responsible to handle the events in the main menu and decides what to show on the
+    screen
+      :param
+      :return:
+      """
+
     def __init__(self, view, player_name, players_and_scores, conn):
         super().__init__(view, player_name, players_and_scores, conn)
         self.main_text = model.Text("Welcome to Simon!", 350, 50)
@@ -260,6 +348,10 @@ class MainMenuController(AbstractController):
         self.input_active = True
 
     def draw_top_players(self):
+        """ This function draw the top players table
+          :param
+          :return:
+          """
         index = 1
         for name, score in self.players_and_scores:
             tmp_txt = model.Text(f"{index}) {name} : {score}", 400, 300 + (index - 1) * 40)

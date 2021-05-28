@@ -33,7 +33,7 @@ def create_table(conn):
 
 def insert_row(conn, value):
     """
-    Create a new task
+    Create a new row
     :param conn:
     :param value:
     :return:
