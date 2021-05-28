@@ -10,6 +10,7 @@ class View:
         pygame.init()
         self.win = pygame.display.set_mode((900, 500))
         self.win.fill(BLACK)
+        self.base_font = pygame.font.SysFont('Corbel', 15)
         self.small_font = pygame.font.SysFont('Corbel', 35)
         pygame.display.set_caption("Simon Says")
 
@@ -26,17 +27,27 @@ class View:
 
     def show_square(self, square):
         """Show on square"""
-        rect = self.get_rect_from_square(square)
-        pygame.draw.rect(self.win, square.color, rect)
+
         if isinstance(square, model.Button):
+            rect = self.get_rect_from_square(square)
             if square.text is not None:
                 text = self.small_font.render(square.text, True, WHITE)
+                rect.width = max(rect.width, text.get_width() + 45)
+                pygame.draw.rect(self.win, square.color, rect)
                 self.win.blit(text, (square.text_positionX, square.text_positionY))
+            else:
+                pygame.draw.rect(self.win, square.color, rect)
+        else:
+            rect = self.get_rect_from_square(square)
+            pygame.draw.rect(self.win, square.color, rect)
         pygame.display.update()
 
     def show_text(self, txt):
         """Shows text on the screen"""
-        text = self.small_font.render(txt.msg, True, WHITE)
+        if txt.small is True:
+            text = self.base_font.render(txt.msg, True, WHITE)
+        else:
+            text = self.small_font.render(txt.msg, True, WHITE,)
         self.win.blit(text, (txt.x, txt.y))
         pygame.display.update()
 

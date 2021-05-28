@@ -52,7 +52,8 @@ class Player:
 
 
 class Text:
-    def __init__(self, txt, x, y):
+    def __init__(self, txt, x, y, small=False):
         self.msg = txt
         self.x = x
         self.y = y
+        self.small = small

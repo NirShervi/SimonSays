@@ -11,6 +11,8 @@ BRIGHTBLUE = (0, 0, 255)
 GREEN = (50, 205, 50)
 BRIGHTGREEN = (0, 255, 0)
 BLACK = (0, 0, 0)
+PASSIVE_INPUT = pygame.Color('chartreuse4')
+ACTIVE_INPUT = pygame.Color('lightskyblue3')
 
 SHOW_SIMON_TURN = pygame.USEREVENT + 1
 SIMON_TURN_EVENT = pygame.event.Event(SHOW_SIMON_TURN, show_turn="False")

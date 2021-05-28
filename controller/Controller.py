@@ -7,8 +7,9 @@ from threading import Timer
 
 class Controller:
     def __init__(self, view):
-        self.game_controller = GameController(view)
-        self.main_controller = MainMenuController(view)
+        self.player_name = model.Text("", 405, 125)
+        self.game_controller = GameController(view, self.player_name)
+        self.main_controller = MainMenuController(view, self.player_name)
         self.mode = MAIN_MOD
         self.view = view
 
@@ -16,22 +17,23 @@ class Controller:
         clock = pygame.time.Clock()
         while self.mode is not EXIT:
             clock.tick(60)
-            events = pygame.event.get()
 
+            events = pygame.event.get()
             if self.mode == PLAY_MOD:
                 mode_tmp = self.game_controller.run(events)
             else:
                 mode_tmp = self.main_controller.run(events)
             if mode_tmp != self.mode:
                 self.mode = mode_tmp
-                self.game_controller = GameController(self.view)
-                self.main_controller = MainMenuController(self.view)
+                self.game_controller = GameController(self.view, self.player_name)
+                self.main_controller = MainMenuController(self.view, self.player_name)
                 self.view.update_view()
 
 
 class AbstractController:
-    def __init__(self, view):
+    def __init__(self, view, player_name):
         self.view = view
+        self.player_name = player_name
         self.to_display = []
         self.main_text = None
         self.sleep = False
@@ -50,8 +52,8 @@ class AbstractController:
 
 class GameController(AbstractController):
 
-    def __init__(self, view):
-        super().__init__(view)
+    def __init__(self, view, player_name):
+        super().__init__(view, player_name)
         self.simon = model.Simon()
         self.player = model.Player()
         self.keepGoing = PLAY_MOD
@@ -77,7 +79,7 @@ class GameController(AbstractController):
 
     def restart(self):
         self.view.update_view()
-        self.__init__(self.view)
+        self.__init__(self.view, self.player_name)
 
     def run(self, events):
         for event in events:
@@ -192,22 +194,39 @@ class GameController(AbstractController):
 
 
 class MainMenuController(AbstractController):
-    def __init__(self, view):
-        super().__init__(view)
+    def __init__(self, view, player_name):
+        super().__init__(view, player_name)
         self.main_text = model.Text("Welcome to Simon!", 350, 50)
-        self.play_button = model.Button(50, (400, 150), ORANGE, on_click=self.change_mod,
+        self.enter_your_name = model.Text("Please enter your name bellow:", 400, 90, small=True)
+        self.play_button = model.Button(50, (400, 200), ORANGE, on_click=self.change_mod,
                                         text="Play", width=150)
-        self.to_display = [self.main_text, self.play_button]
-        self.clickable = [self.play_button]
+        self.input_box = model.Button(50, (400, 120), PASSIVE_INPUT, width=150, on_click=self.handle_input_active)
+        self.input_active = False
+        self.to_display = [self.main_text, self.play_button, self.input_box, self.enter_your_name]
+        self.clickable = [self.play_button, self.input_box]
         self.keepGoing = MAIN_MOD
 
     def run(self, events):
         for event in events:
             if event.type == pygame.QUIT:
                 self.keepGoing = EXIT
+            if event.type == pygame.KEYDOWN and self.input_active:
+                if event.key == pygame.K_BACKSPACE:
+                    self.player_name.msg = self.player_name.msg[:-1]
+                    self.input_box.text = self.player_name.msg
+                    self.view.update_view()
+                else:
+                    self.player_name.msg += event.unicode
+                    self.input_box.text = self.player_name.msg
+                    self.view.update_view()
 
         event_pos = get_event(events)
         self.handle_events(event_pos)
+        if self.input_active:
+            self.input_box.color = ACTIVE_INPUT
+        else:
+            self.input_box.color = PASSIVE_INPUT
+
         self.init_window()
         return self.keepGoing
 
@@ -220,6 +239,11 @@ class MainMenuController(AbstractController):
                 rect = self.view.get_rect_from_square(square)
                 if rect.collidepoint(pos):
                     square.on_click()
+                else:
+                    self.input_active = False
+
+    def handle_input_active(self):
+        self.input_active = True
 
 
 def get_event(ev):
