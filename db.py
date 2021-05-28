@@ -52,7 +52,7 @@ def get_all_rows(conn):
     :return: all the rows
     """
     cur = conn.cursor()
-    cur.execute("SELECT * FROM scores")
+    cur.execute("SELECT * FROM scores where score > 0 Order  by score DESC limit 5")
     rows = cur.fetchall()
     return rows
 
