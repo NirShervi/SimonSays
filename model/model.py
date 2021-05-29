@@ -81,6 +81,14 @@ class Player:
                 self.total_score = score
 
 
+class Originator:
+    def __init__(self):
+        self.state = []
+
+    def set_memento(self, player):
+        self.state.append(player.steps_done[-1])
+
+
 class Text:
     """ This class represent Text we want to show on the screen.
       :param small: if we want the font to be small

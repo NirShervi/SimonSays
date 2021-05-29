@@ -8,8 +8,8 @@ from db import *
 class Controller:
     """ This class represent the main controller, the main controller is responsible to switch between different controllers
       :param view: the main view class,
-      rows: a list of tuple that represent the score table,
-      conn: a a connection to the database
+      :param rows: a list of tuple that represent the score table,
+      :param conn: a a connection to the database
       :return:
       """
 
@@ -117,6 +117,7 @@ class GameController(AbstractController):
         self.blinks = 0
         self.sleep_time = 1
         self.sleep = False
+        self.game_started = False
 
     def restart(self):
         """ Reset the GameController object to the initial value
@@ -201,24 +202,26 @@ class GameController(AbstractController):
           :param index: index represent the index of a square in our squares list
           :return:
           """
-        if self.simon.challenge[len(self.player.steps_done)] == index:
-            self.blink(index, False)
-            self.player.steps_done.append(index)
-        else:
-            super().update_main_txt("Oh no! Wrong answer :( ")
-            self.simon_turn = True
-            self.to_display.append(self.restart_button)
-            self.clickable.append(self.restart_button)
-            self.to_display.append(self.back_button)
-            self.clickable.append(self.back_button)
-            insert_row(self.db_conn, (self.player.name, self.player.total_score))
-            self.players_and_scores = get_all_rows(self.db_conn)
+        if self.game_started:
+            if self.simon.challenge[len(self.player.steps_done)] == index:
+                self.blink(index, False)
+                self.player.steps_done.append(index)
+            else:
+                super().update_main_txt("Oh no! Wrong answer :( ")
+                self.simon_turn = True
+                self.to_display.append(self.restart_button)
+                self.clickable.append(self.restart_button)
+                self.to_display.append(self.back_button)
+                self.clickable.append(self.back_button)
+                insert_row(self.db_conn, (self.player.name, self.player.total_score))
+                self.players_and_scores = get_all_rows(self.db_conn)
 
     def show_simon_turn(self):
         """ Letting the user know that is now Simon turn's
           :param
           :return:
           """
+        self.game_started = True
         self.view.update_view()
         self.simon.init_challenge()
         if self.start_button in self.to_display:
@@ -315,11 +318,11 @@ class MainMenuController(AbstractController):
             if event.type == pygame.KEYDOWN and self.input_active:
                 if event.key == pygame.K_BACKSPACE:
                     self.current_player.msg = self.current_player.msg[:-1]
-                    self.input_box.text = self.current_player.msg
+                    self.input_box.text = self.current_player.msg.strip()
                     self.view.update_view()
                 else:
                     self.current_player.msg += event.unicode
-                    self.input_box.text = self.current_player.msg
+                    self.input_box.text = self.current_player.msg.strip()
                     self.view.update_view()
 
         event_pos = get_event(events)
@@ -333,7 +336,9 @@ class MainMenuController(AbstractController):
         return self.keepGoing
 
     def change_mod(self):
-        self.keepGoing = PLAY_MOD
+        tmp_name = self.current_player.msg.replace(" ", "")
+        if tmp_name != "":
+            self.keepGoing = PLAY_MOD
 
     def handle_events(self, pos):
         if pos:
