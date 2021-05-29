@@ -55,13 +55,38 @@ class Simon:
         self.steps_to_show = []
         self.lvl = 1
 
-    def init_challenge(self):
-        self.challenge = []
-        self.steps_to_show = []
-        for x in range(self.lvl):
+    def init_challenge(self, custom_lvl):
+        if custom_lvl is not None:
+            self.challenge = custom_lvl[:]
+            self.lvl = len(custom_lvl)
+
+        else:
+            self.steps_to_show = []
             num = random.randint(0, 3)
             self.challenge.append(num)
-            self.steps_to_show.append(num)
+
+        self.steps_to_show = self.challenge[:]
+
+
+class Memento:
+    def __init__(self, state) -> None:
+        self._state = state
+
+    def get_saved_state(self):
+        return self._state
+
+
+class Originator:
+    _state = None
+
+    def set(self, state) -> None:
+        self._state = state
+
+    def save_to_memento(self) -> Memento:
+        return Memento(self._state)
+
+    def restore_from_memento(self, memento) -> None:
+        self._state = memento.get_saved_state()
 
 
 class Player:
@@ -79,14 +104,6 @@ class Player:
         for name, score in all_scores:
             if name == self.name:
                 self.total_score = score
-
-
-class Originator:
-    def __init__(self):
-        self.state = []
-
-    def set_memento(self, player):
-        self.state.append(player.steps_done[-1])
 
 
 class Text:

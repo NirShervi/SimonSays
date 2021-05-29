@@ -109,9 +109,14 @@ class GameController(AbstractController):
                                            width=200)
         self.back_button = model.Button(50, (10, 150), ORANGE, on_click=self.handle_back_event, text="Main menu",
                                         width=200)
+        self.redo_txt = model.Text("Click the bottom bellow to return to the prev stage", 360, 370, True)
+        self.redo_button = model.Button(50, (360, 400), ORANGE, on_click=self.handle_prev_lvl, text="Previous level",
+                                        width=200)
         self.score_txt = model.Text("Score : 0", 10, 10)
         self.simon_turn = False
         self.main_text = model.Text("Simon's Turn", 400, 50)
+        self.originator = model.Originator()
+        self.states = []
         self.to_display = [*self.squares, self.start_button, self.score_txt]
         self.clickable = [*self.squares, self.start_button]
         self.blinks = 0
@@ -146,7 +151,6 @@ class GameController(AbstractController):
                 self.show_player_turn()
 
         event_pos = get_event(events)
-
         self.handle_events(event_pos)
         self.check_turn()
         self.init_window()
@@ -172,6 +176,8 @@ class GameController(AbstractController):
                         square.on_click()
                     elif square == self.back_button:
                         square.on_click()
+                    elif square == self.redo_button:
+                        square.on_click()
                     return
 
     def handle_square_event(self, i):
@@ -186,7 +192,6 @@ class GameController(AbstractController):
           :param
           :return a function to be called when a user click on an event:
           """
-        self.simon_turn = True
         return self.show_simon_turn
 
     def handle_back_event(self):
@@ -213,23 +218,42 @@ class GameController(AbstractController):
                 self.clickable.append(self.restart_button)
                 self.to_display.append(self.back_button)
                 self.clickable.append(self.back_button)
+                if self.simon.lvl > 1:
+                    self.to_display.append(self.redo_button)
+                    self.clickable.append(self.redo_button)
+                    self.to_display.append(self.redo_txt)
                 insert_row(self.db_conn, (self.player.name, self.player.total_score))
                 self.players_and_scores = get_all_rows(self.db_conn)
 
-    def show_simon_turn(self):
+    def show_simon_turn(self, custom_lvl=None):
         """ Letting the user know that is now Simon turn's
           :param
           :return:
           """
+        self.simon_turn = True
         self.game_started = True
         self.view.update_view()
-        self.simon.init_challenge()
+        self.simon.init_challenge(custom_lvl)
+        self.originator.set(self.simon.challenge[:])
+        self.states.append(self.originator.save_to_memento())
         if self.start_button in self.to_display:
             self.to_display.remove(self.start_button)
             self.clickable.remove(self.start_button)
 
         super().update_main_txt("Simon's Turn")
         pygame.event.post(SIMON_TURN_EVENT)
+
+    def handle_prev_lvl(self):
+        self.to_display.remove(self.restart_button)
+        self.clickable.remove(self.restart_button)
+        self.to_display.remove(self.back_button)
+        self.clickable.remove(self.back_button)
+        self.to_display.remove(self.redo_button)
+        self.to_display.remove(self.redo_txt)
+        self.originator.restore_from_memento(self.states[-2])
+        prev_lvl = self.originator.save_to_memento().get_saved_state()
+        self.states.pop()
+        self.show_simon_turn(custom_lvl=prev_lvl)
 
     def show_player_turn(self):
         """Letting the user know that now is the user turn
