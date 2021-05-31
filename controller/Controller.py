@@ -328,7 +328,7 @@ class MainMenuController(AbstractController):
         self.play_button = model.Button(50, (400, 200), ORANGE, on_click=self.change_mod,
                                         text="Play", width=150)
         self.input_box = model.Button(50, (400, 120), PASSIVE_INPUT, width=150, on_click=self.handle_input_active)
-        self.top_players = model.Text("Top 5 players:", 400, 250)
+        self.top_players = model.Text("Top 5 players:", 50, 50)
         self.input_active = False
         self.to_display = [self.main_text, self.play_button, self.input_box, self.enter_your_name, self.top_players]
         self.clickable = [self.play_button, self.input_box]
@@ -383,7 +383,7 @@ class MainMenuController(AbstractController):
           """
         index = 1
         for name, score in self.players_and_scores:
-            tmp_txt = model.Text(f"{index}) {name} : {score}", 400, 300 + (index - 1) * 40)
+            tmp_txt = model.Text(f"{index}) {name} : {score}", 50, 80 + (index - 1) * 40)
             self.to_display.append(tmp_txt)
             index += 1
 
